@@ -1,0 +1,57 @@
+name: Check main for vulns daily
+
+on:
+  workflow_dispatch:
+    inputs:
+      nodejsStream:
+        default: 'main'
+  schedule:
+    - cron: 0 0 * * *
+
+permissions:
+  contents: read
+
+jobs:
+  check-vulns:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+      - name: Checkout node.js repo
+        uses: actions/checkout@v3
+        with:
+          repository: nodejs/node
+          path: node
+          ref: ${{ github.event.inputs.nodejsStream || 'main' }}
+      - name: Installing pre-reqs
+        run: |
+          cd  ${{ github.workspace }}/node/tools/dep_checker
+          pip install -r requirements.txt
+      - name: Run the check
+        run: |
+          cd  ${{ github.workspace }}/node/tools/dep_checker
+          (
+            set -o pipefail
+            python main.py --gh-token ${{ secrets.VULN_CHECK_TOKEN }} 2>&1 | tee result.log
+          )
+      - name: collect error
+        id: collect_error
+        if: ${{ failure() }}
+        run: |
+          cd  ${{ github.workspace }}/node/tools/dep_checker
+          result=`cat result.log`
+          curdate=`date`
+          echo "::set-output name=date::$curdate"
+          echo "::set-output name=result::$result"
+      - name: check for failure
+        if: ${{ failure() }}
+        run: |
+          curl --request POST \
+          --url https://api.github.com/repos/${{ github.repository }}/issues \
+          --header 'Authorization: token ${{ secrets.VULN_CHECK_TOKEN }}' \
+          --header 'Accept: application/vnd.github+json' \
+          --data '{
+            "title": "Vulnerability check reported failure - ${{ steps.collect_error.outputs.date }}",
+            "body": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} \\\n${{ steps.collect_error.outputs.result }}"}'
