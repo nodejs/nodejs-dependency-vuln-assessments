@@ -1,4 +1,4 @@
-name: Reusable flow to check for vunls in Depenencies of Node.js branch
+name: Reusable flow to check for vulns in dependencies of a Node.js branch
 
 on:
   workflow_call:
@@ -6,12 +6,16 @@ on:
       nodejsStream:
         type: string
         default: 'main'
-    secrets:
-      VULN_CHECK_TOKEN:
-        required: true
+  workflow_dispatch:
+    inputs:
+      nodejsStream:
+        type: string
+        default: 'main'
+
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   check-vulns:
@@ -28,32 +32,33 @@ jobs:
           path: node
           ref: ${{ inputs.nodejsStream }}
       - name: Installing pre-reqs
-        run: |
-          cd  ${{ github.workspace }}/node/tools/dep_checker
-          pip install -r requirements.txt
+        working-directory: ./node/tools/dep_checker
+        run: pip install -r requirements.txt
       - name: Run the check
+        working-directory: ./node/tools/dep_checker
         run: |
-          cd  ${{ github.workspace }}/node/tools/dep_checker
           (
             set -o pipefail
-            python main.py --gh-token ${{ secrets.VULN_CHECK_TOKEN }} 2>&1 | tee result.log
+            python main.py --gh-token ${{ secrets.GITHUB_TOKEN }} 2>&1 | tee result.log
           )
       - name: collect error
         id: collect_error
         if: ${{ failure() }}
+        working-directory: ./node/tools/dep_checker
         run: |
-          cd  ${{ github.workspace }}/node/tools/dep_checker
-          result=`cat result.log`
-          curdate=`date`
-          echo "::set-output name=date::$curdate"
-          echo "::set-output name=result::$result"
-      - name: check for failure
+          content=$(cat result.log)
+          # New lines must be escaped since outputs cannot be multi-line
+          content="${content//'%'/'%25'}"
+          content="${content//$'\n'/'%0A'}"
+          content="${content//$'\r'/'%0D'}"
+          echo "::set-output name=result::$content"
+      - uses: actions/checkout@v3
         if: ${{ failure() }}
-        run: |
-          curl --request POST \
-          --url https://api.github.com/repos/${{ github.repository }}/issues \
-          --header 'Authorization: token ${{ secrets.VULN_CHECK_TOKEN }}' \
-          --header 'Accept: application/vnd.github+json' \
-          --data '{
-            "title": "Vulnerability check reported failure on ${{inputs.nodejsStream}} - ${{ steps.collect_error.outputs.date }}",
-            "body": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} \\\n${{ steps.collect_error.outputs.result }}"}'
+      - uses: JasonEtco/create-an-issue@v2
+        if: ${{ failure() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ERROR_MSG: ${{ steps.collect_error.outputs.result }}
+          NODEJS_STREAM: ${{ inputs.nodejsStream }}
+          ACTION_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
