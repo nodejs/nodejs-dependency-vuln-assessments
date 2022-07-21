@@ -6,11 +6,15 @@ on:
       nodejsStream:
         type: string
         default: 'main'
+    secrets:
+      NVD_API_KEY:
+        required: true
   workflow_dispatch:
     inputs:
       nodejsStream:
         type: string
         default: 'main'
+        
 
 
 permissions:
@@ -39,7 +43,7 @@ jobs:
         run: |
           (
             set -o pipefail
-            python main.py --gh-token ${{ secrets.GITHUB_TOKEN }} 2>&1 | tee result.log
+            python main.py --gh-token ${{ secrets.GITHUB_TOKEN }} --nvd-key={{ secrets.NVD_API_KEY }} 2>&1 | tee result.log
           )
       - name: collect error
         id: collect_error
