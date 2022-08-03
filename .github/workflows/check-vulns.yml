@@ -23,6 +23,9 @@ permissions:
 jobs:
   check-vulns:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set_matrix.outputs.matrix }}
+      full_output: ${{ steps.collect_error.outputs.result }}
     steps:
       - name: Setup Python 3.9
         uses: actions/setup-python@v3
@@ -44,6 +47,17 @@ jobs:
             set -o pipefail
             python main.py --gh-token ${{ secrets.GITHUB_TOKEN }} --nvd-key=${{ secrets.NVD_API_KEY }} 2>&1 | tee result.log
           )
+      - name: build matrix
+        id: set_matrix
+        if: ${{ failure() }}
+        working-directory: ./node/tools/dep_checker
+        run: |
+          matrix=$((echo '{ "vulnerability" : ['
+          cat result.log | sed -n 's/.*\(CVE-.*\|GHSA-.*\).*/"\1",/p' | sed '$s/,//'
+          echo "]}"
+          ) | jq -c .)
+          echo "::set-output name=matrix::$matrix"
+
       - name: collect error
         id: collect_error
         if: ${{ failure() }}
@@ -55,13 +69,21 @@ jobs:
           content="${content//$'\n'/'%0A'}"
           content="${content//$'\r'/'%0D'}"
           echo "::set-output name=result::$content"
+  create-issues:
+    needs: check-vulns
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.check-vulns.outputs.matrix) }}
+    steps:
       - uses: actions/checkout@v3
-        if: ${{ failure() }}
-      - uses: JasonEtco/create-an-issue@v2
-        if: ${{ failure() }}
+      - uses: dblock/create-a-github-issue@v3
+        with:
+          update_existing: false
+          search_existing: all
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ERROR_MSG: ${{ steps.collect_error.outputs.result }}
+          ERROR_MSG: ${{ needs.check-vulns.outputs.full_output }}
+          VULN_ID: ${{ matrix.vulnerability }}
           NODEJS_STREAM: ${{ inputs.nodejsStream }}
           ACTION_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-

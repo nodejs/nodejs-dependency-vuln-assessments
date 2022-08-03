@@ -1,12 +1,14 @@
 ---
-title: Vulnerability check reported failure on {{ env.NODEJS_STREAM }} - {{ date | date('YYYY-MM-DD') }}
+title: New vulnerability {{ env.VULN_ID }} found on {{ env.NODEJS_STREAM }}
 asignees:
 labels:
 ---
 Failed run: {{ env.ACTION_URL }}
+Vulnerability ID: {{ env.VULN_ID }}
 
-Output:
+Full output:
 --------------------
 ```
 {{ env.ERROR_MSG }}
 ```
+
