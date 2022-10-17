@@ -12,12 +12,12 @@ def get_package_json_version(path: Path) -> str:
         return matches.groupdict()["version"]
 
 
-def get_acorn_version() -> str:
-    return get_package_json_version(Path("../../deps/acorn/acorn/package.json"))
+def get_acorn_version(repo_path: Path) -> str:
+    return get_package_json_version(repo_path / "deps/acorn/acorn/package.json")
 
 
-def get_brotli_version() -> str:
-    with open("../../deps/brotli/c/common/version.h", "r") as f:
+def get_brotli_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/brotli/c/common/version.h", "r") as f:
         matches = re.search("#define BROTLI_VERSION (?P<version>.*)", f.read())
         if matches is None:
             raise RuntimeError("Error extracting version number for brotli")
@@ -28,32 +28,32 @@ def get_brotli_version() -> str:
         return f"{major_version}.{minor_version}.{patch_version}"
 
 
-def get_c_ares_version() -> str:
-    with open("../../deps/cares/include/ares_version.h", "r") as f:
+def get_c_ares_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/cares/include/ares_version.h", "r") as f:
         matches = re.search('#define ARES_VERSION_STR "(?P<version>.*)"', f.read())
         if matches is None:
             raise RuntimeError("Error extracting version number for c-ares")
         return matches.groupdict()["version"]
 
 
-def get_cjs_lexer_version() -> str:
-    return get_package_json_version(Path("../../deps/cjs-module-lexer/package.json"))
+def get_cjs_lexer_version(repo_path: Path) -> str:
+    return get_package_json_version(repo_path / "deps/cjs-module-lexer/package.json")
 
 
-def get_corepack_version() -> str:
-    return get_package_json_version(Path("../../deps/corepack/package.json"))
+def get_corepack_version(repo_path: Path) -> str:
+    return get_package_json_version(repo_path / "deps/corepack/package.json")
 
 
-def get_icu_version() -> str:
-    with open("../../deps/icu-small/source/common/unicode/uvernum.h", "r") as f:
+def get_icu_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/icu-small/source/common/unicode/uvernum.h", "r") as f:
         matches = re.search('#define U_ICU_VERSION "(?P<version>.*)"', f.read())
         if matches is None:
             raise RuntimeError("Error extracting version number for ICU")
         return matches.groupdict()["version"]
 
 
-def get_llhttp_version() -> str:
-    with open("../../deps/llhttp/include/llhttp.h", "r") as f:
+def get_llhttp_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/llhttp/include/llhttp.h", "r") as f:
         matches = re.search(
             "#define LLHTTP_VERSION_MAJOR (?P<major>.*)\n"
             "#define LLHTTP_VERSION_MINOR (?P<minor>.*)\n"
@@ -67,53 +67,90 @@ def get_llhttp_version() -> str:
         return f"{versions['major']}.{versions['minor']}.{versions['patch']}"
 
 
-def get_nghttp2_version() -> str:
-    with open("../../deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h", "r") as f:
+def get_nghttp2_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h", "r") as f:
         matches = re.search('#define NGHTTP2_VERSION "(?P<version>.*)"', f.read())
         if matches is None:
             raise RuntimeError("Error extracting version number for nghttp2")
         return matches.groupdict()["version"]
 
 
-def get_ngtcp2_version() -> str:
-    with open("../../deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h", "r") as f:
+def get_ngtcp2_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/ngtcp2/ngtcp2/lib/includes/ngtcp2/version.h", "r") as f:
         matches = re.search('#define NGTCP2_VERSION "(?P<version>.*)"', f.read())
         if matches is None:
             raise RuntimeError("Error extracting version number for ngtcp2")
         return matches.groupdict()["version"]
 
 
-def get_nghttp3_version() -> str:
-    with open("../../deps/ngtcp2/nghttp3/lib/includes/nghttp3/version.h", "r") as f:
+def get_nghttp3_version(repo_path: Path) -> str:
+    with open(
+        repo_path / "deps/ngtcp2/nghttp3/lib/includes/nghttp3/version.h", "r"
+    ) as f:
         matches = re.search('#define NGHTTP3_VERSION "(?P<version>.*)"', f.read())
         if matches is None:
             raise RuntimeError("Error extracting version number for nghttp3")
         return matches.groupdict()["version"]
 
 
-def get_npm_version() -> str:
-    return get_package_json_version(Path("../../deps/npm/package.json"))
+def get_npm_version(repo_path: Path) -> str:
+    return get_package_json_version(repo_path / "deps/npm/package.json")
 
 
-def get_openssl_version() -> str:
-    with open("../../deps/openssl/openssl/VERSION.dat", "r") as f:
-        matches = re.search(
-            "MAJOR=(?P<major>.*)\n" "MINOR=(?P<minor>.*)\n" "PATCH=(?P<patch>.*)",
-            f.read(),
-            re.MULTILINE,
-        )
-        if matches is None:
-            raise RuntimeError("Error extracting version number for openssl")
-        versions = matches.groupdict()
-        return f"{versions['major']}.{versions['minor']}.{versions['patch']}"
+def get_openssl_version(repo_path: Path) -> str:
+    # Newer OpenSSL versions use a VERSION.dat file, whereas older versions specify it in the opensslv.h header
+    version_dat = repo_path / "deps/openssl/openssl/VERSION.dat"
+    version_header = repo_path / "deps/openssl/openssl/include/openssl/opensslv.h"
+
+    if version_dat.exists():
+        with open(version_dat, "r") as f:
+            matches = re.search(
+                "MAJOR=(?P<major>.*)\n" "MINOR=(?P<minor>.*)\n" "PATCH=(?P<patch>.*)",
+                f.read(),
+                re.MULTILINE,
+            )
+            if matches is None:
+                raise RuntimeError("Error extracting version number for openssl")
+            versions = matches.groupdict()
+            return f"{versions['major']}.{versions['minor']}.{versions['patch']}"
+    elif version_header.exists():
+        with open(version_header, "r") as f:
+            matches = re.search(
+                "# define OPENSSL_VERSION_NUMBER *(?P<version>.*)L", f.read()
+            )
+            if matches is None:
+                raise RuntimeError("Error extracting version number for OpenSSL")
+            hex_version = matches.groupdict()["version"]
+            major_version = int(hex_version, 16) >> 28
+            minor_version = int(hex_version, 16) >> 20 & 0x0F
+            fix_version = int(hex_version, 16) >> 12 & 0xFF
+            patch_version = int(hex_version, 16) >> 4 & 0xFF
+            patch_str = chr(ord("a") + (patch_version - 1)) if patch_version > 0 else ""
+            status = int(hex_version, 16) & 0x0F
+
+            def status_to_str(status: int) -> str:
+                if status == 0:
+                    return "-dev"
+                elif status >= 1 and status <= 14:
+                    return f"-beta{status}"
+                else:
+                    return ""
+
+            status_str = status_to_str(status)
+            return (
+                f"{major_version}.{minor_version}.{fix_version}{patch_str}{status_str}"
+            )
+
+    else:
+        raise RuntimeError("Unsupported OpenSSL: could not determine version")
 
 
-def get_undici_version() -> str:
-    return get_package_json_version(Path("../../deps/undici/src/package.json"))
+def get_undici_version(repo_path: Path) -> str:
+    return get_package_json_version(repo_path / "deps/undici/src/package.json")
 
 
-def get_libuv_version() -> str:
-    with open("../../deps/uv/include/uv/version.h", "r") as f:
+def get_libuv_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/uv/include/uv/version.h", "r") as f:
         matches = re.search(
             "#define UV_VERSION_MAJOR (?P<major>.*)\n"
             "#define UV_VERSION_MINOR (?P<minor>.*)\n"
@@ -127,8 +164,8 @@ def get_libuv_version() -> str:
         return f"{versions['major']}.{versions['minor']}.{versions['patch']}"
 
 
-def get_uvwasi_version() -> str:
-    with open("../../deps/uvwasi/include/uvwasi.h", "r") as f:
+def get_uvwasi_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/uvwasi/include/uvwasi.h", "r") as f:
         matches = re.search(
             "#define UVWASI_VERSION_MAJOR (?P<major>.*)\n"
             "#define UVWASI_VERSION_MINOR (?P<minor>.*)\n"
@@ -142,8 +179,8 @@ def get_uvwasi_version() -> str:
         return f"{versions['major']}.{versions['minor']}.{versions['patch']}"
 
 
-def get_v8_version() -> str:
-    with open("../../deps/v8/include/v8-version.h", "r") as f:
+def get_v8_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/v8/include/v8-version.h", "r") as f:
         matches = re.search(
             "#define V8_MAJOR_VERSION (?P<major>.*)\n"
             "#define V8_MINOR_VERSION (?P<minor>.*)\n"
@@ -161,8 +198,8 @@ def get_v8_version() -> str:
         )
 
 
-def get_zlib_version() -> str:
-    with open("../../deps/zlib/zlib.h", "r") as f:
+def get_zlib_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/zlib/zlib.h", "r") as f:
         matches = re.search('#define ZLIB_VERSION "(?P<version>.*)"', f.read())
         if matches is None:
             raise RuntimeError("Error extracting version number for zlib")

@@ -20,16 +20,18 @@ in Node's dependencies.
 Once acquired, the script can be run as follows:
 
 ```shell
-cd node/tools/dep_checker/
+git clone https://github.com/nodejs/node.git
+cd node && git checkout v18.x && cd ..
+cd dep_checker/
 pip install -r requirements.txt
 
 # Python >= 3.9 required
-python main.py --gh-token=$PERSONAL_ACCESS_TOKEN --nvd-key=$NVD_API_KEY
+python main.py --gh-token=$PERSONAL_ACCESS_TOKEN --nvd-key=$NVD_API_KEY ../node v18.x
 
 # The command can also be run without parameters
 # This will skip querying the GitHub Advisory Database, and query the NVD
 # using the anonymous (rate-limited) API
-python main.py
+python main.py ../node v18.x
 ```
 
 ## Example output
@@ -67,6 +69,5 @@ non-affected version.
   of
   the vulnerability. This is the case except when the ID matches one in the ignore-list (inside `dependencies.py`) in
   which case the vulnerability is ignored.
-
 
 
