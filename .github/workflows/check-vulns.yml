@@ -31,26 +31,28 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: '3.9'
+      - name: Checkout current repository
+        uses: actions/checkout@v3
+      - name: Installing pre-reqs
+        working-directory: ./dep_checker
+        run: pip install -r requirements.txt
       - name: Checkout node.js repo
         uses: actions/checkout@v3
         with:
           repository: nodejs/node
           path: node
           ref: ${{ inputs.nodejsStream }}
-      - name: Installing pre-reqs
-        working-directory: ./node/tools/dep_checker
-        run: pip install -r requirements.txt
       - name: Run the check
-        working-directory: ./node/tools/dep_checker
+        working-directory: ./dep_checker
         run: |
           (
             set -o pipefail
-            python main.py --gh-token ${{ secrets.GITHUB_TOKEN }} --nvd-key=${{ secrets.NVD_API_KEY }} 2>&1 | tee result.log
+            python main.py --gh-token ${{ secrets.GITHUB_TOKEN }} --nvd-key=${{ secrets.NVD_API_KEY }} ../node ${{ inputs.nodejsStream }} 2>&1 | tee result.log
           )
       - name: build matrix
         id: set_matrix
         if: ${{ failure() }}
-        working-directory: ./node/tools/dep_checker
+        working-directory: ./dep_checker
         run: |
           matrix=$((echo '{ "vulnerability" : ['
           cat result.log | sed -n 's/.*\(CVE-.*\|GHSA-.*\).*/"\1",/p' | sed '$s/,//'
@@ -61,7 +63,7 @@ jobs:
       - name: collect error
         id: collect_error
         if: ${{ failure() }}
-        working-directory: ./node/tools/dep_checker
+        working-directory: ./dep_checker
         run: |
           content=$(cat result.log)
           # New lines must be escaped since outputs cannot be multi-line
