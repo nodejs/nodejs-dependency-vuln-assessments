@@ -1,4 +1,4 @@
-name: Check v18.x for vulns daily
+name: Check v19.x for vulns daily
 
 on:
   workflow_dispatch:
