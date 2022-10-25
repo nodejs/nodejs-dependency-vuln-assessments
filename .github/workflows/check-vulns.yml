@@ -28,7 +28,7 @@ jobs:
       full_output: ${{ steps.collect_error.outputs.result }}
     steps:
       - name: Setup Python 3.9
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
       - name: Checkout current repository
