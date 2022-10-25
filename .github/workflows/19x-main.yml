@@ -1,0 +1,17 @@
+name: Check v19.x for vulns daily
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 10 10 * * *
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-vulns:
+    uses: ./.github/workflows/check-vulns.yml
+    with:
+      nodejsStream: v19.x
+    secrets: inherit
