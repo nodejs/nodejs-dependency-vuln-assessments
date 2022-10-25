@@ -26,11 +26,23 @@ from packaging.specifiers import SpecifierSet
 from typing import Optional
 from pathlib import Path
 
+import json
+
 
 class Vulnerability:
-    def __init__(self, id: str, url: str):
+    def __init__(self, id: str, url: str, dependency: str, version: str):
         self.id = id
         self.url = url
+        self.dependency = dependency
+        self.version = version
+
+
+class VulnerabilityEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Vulnerability):
+            return {"id": obj.id, "url": obj.url, "dependency": obj.dependency, "version": obj.version}
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
 
 
 vulnerability_found_message = """For each dependency and vulnerability, check the following:
@@ -64,7 +76,7 @@ github_vulnerabilities_query = gql(
 
 def query_ghad(
     dependencies: dict[str, Dependency], gh_token: str, repo_path: Path
-) -> dict[str, list[Vulnerability]]:
+) -> list[Vulnerability]:
     """Queries the GitHub Advisory Database for vulnerabilities reported for Node's dependencies.
 
     The database supports querying by package name in the NPM ecosystem, so we only send queries for the dependencies
@@ -86,7 +98,7 @@ def query_ghad(
         parse_results=True,
     )
 
-    found_vulnerabilities: dict[str, list[Vulnerability]] = defaultdict(list)
+    found_vulnerabilities: list[Vulnerability] = list()
     for name, dep in deps_in_npm.items():
         variables_package = {
             "package_name": dep.npm_name,
@@ -103,10 +115,10 @@ def query_ghad(
             and v["advisory"]["ghsaId"] not in ignore_list
         ]
         if matching_vulns:
-            found_vulnerabilities[name].extend(
+            found_vulnerabilities.extend(
                 [
                     Vulnerability(
-                        id=vuln["advisory"]["ghsaId"], url=vuln["advisory"]["permalink"]
+                        id=vuln["advisory"]["ghsaId"], url=vuln["advisory"]["permalink"], dependency=name, version=dep_version
                     )
                     for vuln in matching_vulns
                 ]
@@ -117,7 +129,7 @@ def query_ghad(
 
 def query_nvd(
     dependencies: dict[str, Dependency], api_key: Optional[str], repo_path: Path
-) -> dict[str, list[Vulnerability]]:
+) -> list[Vulnerability]:
     """Queries the National Vulnerability Database for vulnerabilities reported for Node's dependencies.
 
     The database supports querying by CPE (Common Platform Enumeration) or by a keyword present in the CVE's
@@ -129,7 +141,7 @@ def query_nvd(
         for name, dep in dependencies.items()
         if dep.cpe is not None or dep.keyword is not None
     }
-    found_vulnerabilities: dict[str, list[Vulnerability]] = defaultdict(list)
+    found_vulnerabilities: list[Vulnerability] = list()
     for name, dep in deps_in_nvd.items():
         query_results = [
             cve
@@ -139,8 +151,9 @@ def query_nvd(
             if cve.id not in ignore_list
         ]
         if query_results:
-            found_vulnerabilities[name].extend(
-                [Vulnerability(id=cve.id, url=cve.url) for cve in query_results]
+            version = dep.version_parser(repo_path)
+            found_vulnerabilities.extend(
+                [Vulnerability(id=cve.id, url=cve.url, dependency=name, version=version) for cve in query_results]
             )
 
     return found_vulnerabilities
@@ -170,10 +183,16 @@ def main() -> int:
         "--nvd-key",
         help="the NVD API key for querying the National Vulnerability Database",
     )
+    parser.add_argument(
+        "--json-output",
+        action='store_true',
+        help="the NVD API key for querying the National Vulnerability Database",
+    )
     repo_path: Path = parser.parse_args().node_repo_path
     repo_branch: str = parser.parse_args().node_repo_branch
     gh_token = parser.parse_args().gh_token
     nvd_key = parser.parse_args().nvd_key
+    json_output: bool = parser.parse_args().json_output
     if not repo_path.exists() or not (repo_path / ".git").exists():
         raise RuntimeError(
             "Invalid argument: '{repo_path}' is not a valid Node git repository"
@@ -196,25 +215,27 @@ def main() -> int:
         for name, dep in dependencies_info.items()
         if name in dependencies_per_branch[repo_branch]
     }
-    ghad_vulnerabilities: dict[str, list[Vulnerability]] = (
+    ghad_vulnerabilities: list[Vulnerability] = (
         {} if gh_token is None else query_ghad(dependencies, gh_token, repo_path)
     )
-    nvd_vulnerabilities: dict[str, list[Vulnerability]] = query_nvd(
+    nvd_vulnerabilities: list[Vulnerability] = query_nvd(
         dependencies, nvd_key, repo_path
     )
 
-    if not ghad_vulnerabilities and not nvd_vulnerabilities:
+    all_vulnerabilities = {"vulnerabilities": ghad_vulnerabilities + nvd_vulnerabilities}
+    no_vulnerabilities_found = not ghad_vulnerabilities and not nvd_vulnerabilities
+    if json_output:
+        print(json.dumps(all_vulnerabilities, cls=VulnerabilityEncoder))
+        return 0 if no_vulnerabilities_found else 1
+    elif no_vulnerabilities_found:
         print(f"No new vulnerabilities found ({len(ignore_list)} ignored)")
         return 0
     else:
         print("WARNING: New vulnerabilities found")
-        for source in (ghad_vulnerabilities, nvd_vulnerabilities):
-            for name, vulns in source.items():
-                print(
-                    f"- {name} (version {dependencies[name].version_parser(repo_path)}) :"
-                )
-                for v in vulns:
-                    print(f"\t- {v.id}: {v.url}")
+        for vuln in all_vulnerabilities["vulnerabilities"]:
+            print(
+                f"- {vuln.dependency} (version {vuln.version}) : {vuln.id} ({vuln.url})"
+            )
         print(f"\n{vulnerability_found_message}")
         return 1
 

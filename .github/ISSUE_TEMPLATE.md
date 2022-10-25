@@ -1,14 +1,10 @@
 ---
-title: New vulnerability {{ env.VULN_ID }} found on {{ env.NODEJS_STREAM }}
+title: "{{ env.VULN_ID }} ({{ env.VULN_DEP_NAME }}) found on {{ env.NODEJS_STREAM }}"
 asignees:
 labels: "{{ env.NODEJS_STREAM }}"
 ---
-Failed run: {{ env.ACTION_URL }}
+
+A new vulnerability for {{ env.VULN_DEP_NAME }} {{ env.VULN_DEP_VERSION }} was found:
 Vulnerability ID: {{ env.VULN_ID }}
-
-Full output:
---------------------
-```
-{{ env.ERROR_MSG }}
-```
-
+Vulnerability URL: {{ env.VULN_URL }}
+Failed run: {{ env.ACTION_URL }}
