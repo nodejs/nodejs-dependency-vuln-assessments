@@ -28,7 +28,7 @@ jobs:
       full_output: ${{ steps.collect_error.outputs.result }}
     steps:
       - name: Setup Python 3.9
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
       - name: Checkout current repository
@@ -58,7 +58,7 @@ jobs:
           cat result.log | sed -n 's/.*\(CVE-.*\|GHSA-.*\).*/"\1",/p' | sed '$s/,//'
           echo "]}"
           ) | jq -c .)
-          echo "::set-output name=matrix::$matrix"
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
       - name: collect error
         id: collect_error
@@ -70,7 +70,7 @@ jobs:
           content="${content//'%'/'%25'}"
           content="${content//$'\n'/'%0A'}"
           content="${content//$'\r'/'%0D'}"
-          echo "::set-output name=result::$content"
+          echo "result=$content" >> $GITHUB_OUTPUT
   create-issues:
     needs: check-vulns
     if: ${{ always() }}
