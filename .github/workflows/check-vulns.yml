@@ -25,7 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set_matrix.outputs.matrix }}
-      full_output: ${{ steps.collect_error.outputs.result }}
     steps:
       - name: Setup Python 3.9
         uses: actions/setup-python@v4
@@ -47,30 +46,16 @@ jobs:
         run: |
           (
             set -o pipefail
-            python main.py --gh-token ${{ secrets.GITHUB_TOKEN }} --nvd-key=${{ secrets.NVD_API_KEY }} ../node ${{ inputs.nodejsStream }} 2>&1 | tee result.log
+            python main.py --json-output --gh-token ${{ secrets.GITHUB_TOKEN }} --nvd-key=${{ secrets.NVD_API_KEY }} ../node ${{ inputs.nodejsStream }} 2>&1 | tee result.log
           )
       - name: build matrix
         id: set_matrix
         if: ${{ failure() }}
         working-directory: ./dep_checker
         run: |
-          matrix=$((echo '{ "vulnerability" : ['
-          cat result.log | sed -n 's/.*\(CVE-.*\|GHSA-.*\).*/"\1",/p' | sed '$s/,//'
-          echo "]}"
-          ) | jq -c .)
+          matrix=$(cat result.log | jq -c .)
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
-      - name: collect error
-        id: collect_error
-        if: ${{ failure() }}
-        working-directory: ./dep_checker
-        run: |
-          content=$(cat result.log)
-          # New lines must be escaped since outputs cannot be multi-line
-          content="${content//'%'/'%25'}"
-          content="${content//$'\n'/'%0A'}"
-          content="${content//$'\r'/'%0D'}"
-          echo "result=$content" >> $GITHUB_OUTPUT
   create-issues:
     needs: check-vulns
     if: ${{ always() }}
@@ -85,7 +70,9 @@ jobs:
           search_existing: all
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ERROR_MSG: ${{ needs.check-vulns.outputs.full_output }}
-          VULN_ID: ${{ matrix.vulnerability }}
+          VULN_ID: ${{ matrix.vulnerabilities.id }}
+          VULN_URL: ${{ matrix.vulnerabilities.url }}
+          VULN_DEP_NAME: ${{ matrix.vulnerabilities.dependency }}
+          VULN_DEP_VERSION: ${{ matrix.vulnerabilities.version }}
           NODEJS_STREAM: ${{ inputs.nodejsStream }}
           ACTION_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
