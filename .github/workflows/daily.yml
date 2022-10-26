@@ -1,0 +1,32 @@
+name: Check for vulnerabilities daily
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 0 * * *
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  get-supported-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      # JSON array of versions to check, e.g. '["v14","v16","v18","v19","main"]'
+      matrix: ${{ steps.fetch-versions.outputs.matrix }}
+    steps:
+      - id: fetch-versions
+        run: echo "matrix=$(npx -p @pkgjs/nv nv ls supported | jq -c -n '[inputs.versionName] | . += ["main"]')" >> $GITHUB_OUTPUT
+  check-vulns:
+    name: Check vulnerabilities on ${{ matrix.nodejsStream }}
+    needs: get-supported-versions
+    secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        nodejsStream: ${{ fromJSON(needs.get-supported-versions.outputs.matrix) }}
+    uses: ./.github/workflows/check-vulns.yml
+    with:
+      nodejsStream: ${{ matrix.nodejsStream }}
+
