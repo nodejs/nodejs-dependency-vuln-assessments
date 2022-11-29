@@ -12,7 +12,6 @@ which case the vulnerability is ignored.
 """
 
 from argparse import ArgumentParser
-from collections import defaultdict
 from dependencies import (
     ignore_list,
     dependencies_info,
@@ -146,7 +145,7 @@ def query_nvd(
         query_results = [
             cve
             for cve in searchCVE(
-                cpeMatchString=dep.get_cpe(repo_path), keyword=dep.keyword, key=api_key
+                virtualMatchString=dep.get_cpe(repo_path), keywordSearch=dep.keyword, key=api_key
             )
             if cve.id not in ignore_list
         ]
@@ -216,7 +215,7 @@ def main() -> int:
         if name in dependencies_per_branch[repo_branch]
     }
     ghad_vulnerabilities: list[Vulnerability] = (
-        {} if gh_token is None else query_ghad(dependencies, gh_token, repo_path)
+        list() if gh_token is None else query_ghad(dependencies, gh_token, repo_path)
     )
     nvd_vulnerabilities: list[Vulnerability] = query_nvd(
         dependencies, nvd_key, repo_path
