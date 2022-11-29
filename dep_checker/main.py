@@ -145,7 +145,7 @@ def query_nvd(
         query_results = [
             cve
             for cve in searchCVE(
-                virtualMatchString=dep.get_cpe(repo_path), keywordSearch=dep.keyword, key=api_key
+                virtualMatchString=dep.get_cpe(repo_path), keywordSearch=dep.keyword, key=api_key, delay=6 if api_key else False
             )
             if cve.id not in ignore_list
         ]
