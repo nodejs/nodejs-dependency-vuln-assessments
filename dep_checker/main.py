@@ -12,7 +12,6 @@ which case the vulnerability is ignored.
 """
 
 from argparse import ArgumentParser
-from collections import defaultdict
 from dependencies import (
     ignore_list,
     dependencies_info,
@@ -40,7 +39,12 @@ class Vulnerability:
 class VulnerabilityEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Vulnerability):
-            return {"id": obj.id, "url": obj.url, "dependency": obj.dependency, "version": obj.version}
+            return {
+                "id": obj.id,
+                "url": obj.url,
+                "dependency": obj.dependency,
+                "version": obj.version,
+            }
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
 
@@ -118,7 +122,10 @@ def query_ghad(
             found_vulnerabilities.extend(
                 [
                     Vulnerability(
-                        id=vuln["advisory"]["ghsaId"], url=vuln["advisory"]["permalink"], dependency=name, version=dep_version
+                        id=vuln["advisory"]["ghsaId"],
+                        url=vuln["advisory"]["permalink"],
+                        dependency=name,
+                        version=dep_version,
                     )
                     for vuln in matching_vulns
                 ]
@@ -146,14 +153,22 @@ def query_nvd(
         query_results = [
             cve
             for cve in searchCVE(
-                cpeMatchString=dep.get_cpe(repo_path), keyword=dep.keyword, key=api_key
+                virtualMatchString=dep.get_cpe(repo_path),
+                keywordSearch=dep.keyword,
+                key=api_key,
+                delay=6 if api_key else False,
             )
             if cve.id not in ignore_list
         ]
         if query_results:
             version = dep.version_parser(repo_path)
             found_vulnerabilities.extend(
-                [Vulnerability(id=cve.id, url=cve.url, dependency=name, version=version) for cve in query_results]
+                [
+                    Vulnerability(
+                        id=cve.id, url=cve.url, dependency=name, version=version
+                    )
+                    for cve in query_results
+                ]
             )
 
     return found_vulnerabilities
@@ -185,7 +200,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--json-output",
-        action='store_true',
+        action="store_true",
         help="the NVD API key for querying the National Vulnerability Database",
     )
     repo_path: Path = parser.parse_args().node_repo_path
@@ -216,13 +231,15 @@ def main() -> int:
         if name in dependencies_per_branch[repo_branch]
     }
     ghad_vulnerabilities: list[Vulnerability] = (
-        {} if gh_token is None else query_ghad(dependencies, gh_token, repo_path)
+        list() if gh_token is None else query_ghad(dependencies, gh_token, repo_path)
     )
     nvd_vulnerabilities: list[Vulnerability] = query_nvd(
         dependencies, nvd_key, repo_path
     )
 
-    all_vulnerabilities = {"vulnerabilities": ghad_vulnerabilities + nvd_vulnerabilities}
+    all_vulnerabilities = {
+        "vulnerabilities": ghad_vulnerabilities + nvd_vulnerabilities
+    }
     no_vulnerabilities_found = not ghad_vulnerabilities and not nvd_vulnerabilities
     if json_output:
         print(json.dumps(all_vulnerabilities, cls=VulnerabilityEncoder))
