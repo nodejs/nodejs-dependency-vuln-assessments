@@ -56,10 +56,9 @@ common_dependencies: list[str] = [
 
 dependencies_per_branch: dict[str, list[str]] = {
     "main": common_dependencies + ["nghttp3", "ngtcp2", "undici"],
-    "v19.x": common_dependencies + ["nghttp3", "ngtcp2", "undici"],
+    "v20.x": common_dependencies + ["nghttp3", "ngtcp2", "undici"],
     "v18.x": common_dependencies + ["nghttp3", "ngtcp2", "undici"],
     "v16.x": common_dependencies + ["undici"],
-    "v14.x": common_dependencies,
 }
 
 
