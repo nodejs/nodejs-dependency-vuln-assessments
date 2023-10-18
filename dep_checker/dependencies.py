@@ -38,6 +38,7 @@ ignore_list: list[str] = [
 ]
 
 common_dependencies: list[str] = [
+    "ada",
     "acorn",
     "brotli",
     "c-ares",
@@ -50,7 +51,9 @@ common_dependencies: list[str] = [
     "npm",
     "OpenSSL",
     "libuv",
+    "simdutf",
     "uvwasi",
+    "undici",
     "zlib",
 ]
 
@@ -64,6 +67,14 @@ dependencies_per_branch: dict[str, list[str]] = {
 
 
 dependencies_info: dict[str, Dependency] = {
+    "ada": Dependency(
+        version_parser=vp.get_ada_version,
+        cpe=CPE(vendor="ada-url", product="ada"),
+    ),
+    "simdutf": Dependency(
+        version_parser=vp.get_simdutf_version,
+        cpe=CPE(vendor="simdutf", product="simdutf"),
+    ),
     "zlib": Dependency(
         version_parser=vp.get_zlib_version,
         cpe=CPE(vendor="zlib", product="zlib"),
