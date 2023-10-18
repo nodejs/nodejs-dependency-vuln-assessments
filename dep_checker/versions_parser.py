@@ -204,3 +204,17 @@ def get_zlib_version(repo_path: Path) -> str:
         if matches is None:
             raise RuntimeError("Error extracting version number for zlib")
         return matches.groupdict()["version"]
+
+def get_simdutf_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/simdutf/simdutf.h", "r") as f:
+        matches = re.search('#define SIMDUTF_VERSION "(?P<version>.*)"', f.read())
+        if matches is None:
+            raise RuntimeError("Error extracting version number for simdutf")
+        return matches.groupdict()["version"]
+
+def get_ada_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/ada/ada.h", "r") as f:
+        matches = re.search('#define ADA_VERSION "(?P<version>.*)"', f.read())
+        if matches is None:
+            raise RuntimeError("Error extracting version number for ada")
+        return matches.groupdict()["version"]
