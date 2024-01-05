@@ -18,14 +18,27 @@ def get_acorn_version(repo_path: Path) -> str:
 
 def get_brotli_version(repo_path: Path) -> str:
     with open(repo_path / "deps/brotli/c/common/version.h", "r") as f:
-        matches = re.search("#define BROTLI_VERSION (?P<version>.*)", f.read())
+        header_contents = f.read()
+        # Newer versions of brotli define MAJOR, MINOR, PATCH separately.
+        matches = re.search(
+            "#define BROTLI_VERSION_MAJOR (?P<major>.*)\n"
+            "#define BROTLI_VERSION_MINOR (?P<minor>.*)\n"
+            "#define BROTLI_VERSION_PATCH (?P<patch>.*)",
+            header_contents,
+            re.MULTILINE,
+        )
         if matches is None:
-            raise RuntimeError("Error extracting version number for brotli")
-        hex_version = matches.groupdict()["version"]
-        major_version = int(hex_version, 16) >> 24
-        minor_version = int(hex_version, 16) >> 12 & 0xFF
-        patch_version = int(hex_version, 16) & 0xFFFFF
-        return f"{major_version}.{minor_version}.{patch_version}"
+          # Older versions of brotli hex encode the version as a literal.
+          matches = re.search("#define BROTLI_VERSION (?P<version>.*)", header_contents)
+          if matches is None:
+              raise RuntimeError("Error extracting version number for brotli")
+          hex_version = matches.groupdict()["version"]
+          major_version = int(hex_version, 16) >> 24
+          minor_version = int(hex_version, 16) >> 12 & 0xFF
+          patch_version = int(hex_version, 16) & 0xFFFFF
+          return f"{major_version}.{minor_version}.{patch_version}"
+        versions = matches.groupdict()
+        return f"{versions['major']}.{versions['minor']}.{versions['patch']}"
 
 
 def get_c_ares_version(repo_path: Path) -> str:
