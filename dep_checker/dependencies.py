@@ -59,6 +59,7 @@ common_dependencies: list[str] = [
 
 dependencies_per_branch: dict[str, list[str]] = {
     "main": common_dependencies,
+    "v22.x": common_dependencies,
     "v21.x": common_dependencies,
     "v20.x": common_dependencies,
     "v18.x": common_dependencies, # ["per-branch-dependencies"],
