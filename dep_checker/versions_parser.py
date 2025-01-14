@@ -150,6 +150,15 @@ def get_openssl_version(repo_path: Path) -> str:
                     return ""
 
             status_str = status_to_str(status)
+
+            # Check if the version string contains '-nes' and assume it's safe
+            with open(version_header, "r") as f:
+                version_string = f.read()
+                if "-nes" in version_string:
+                    return (
+                        f"{major_version}.{minor_version}.{fix_version}{patch_str}-w-nes"
+                    )
+
             return (
                 f"{major_version}.{minor_version}.{fix_version}{patch_str}{status_str}"
             )
