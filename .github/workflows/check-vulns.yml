@@ -53,7 +53,7 @@ jobs:
         if: ${{ failure() }}
         working-directory: ./dep_checker
         run: |
-          matrix=$(cat result.log | jq -c .)
+          matrix=$(grep -o '{.*}' result.log | jq -c .)
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
   create-issues:
