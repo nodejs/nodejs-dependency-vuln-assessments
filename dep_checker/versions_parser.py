@@ -50,7 +50,7 @@ def get_c_ares_version(repo_path: Path) -> str:
 
 
 def get_cjs_lexer_version(repo_path: Path) -> str:
-    return get_package_json_version(repo_path / "deps/cjs-module-lexer/package.json")
+    return get_package_json_version(repo_path / "deps/cjs-module-lexer/src/package.json")
 
 
 def get_corepack_version(repo_path: Path) -> str:
