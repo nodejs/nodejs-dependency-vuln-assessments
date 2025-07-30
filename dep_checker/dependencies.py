@@ -130,8 +130,11 @@ dependencies_info: dict[str, Dependency] = {
         npm_name="corepack",
     ),
     "CJS Module Lexer": Dependency(
-        version_parser=lambda repo_path: vp.get_cjs_lexer_version_old(repo_path) \
-            if "v20" in str(repo_path) else vp.get_cjs_lexer_version(repo_path),
+        version_parser=lambda repo_path: (
+            vp.get_cjs_lexer_version(repo_path) 
+            if int(vp.get_node_version(repo_path).split(".")[0]) > 20 
+            else vp.get_cjs_lexer_version_old(repo_path)
+        ),
         cpe=None,
         keyword="cjs-module-lexer",
         npm_name="cjs-module-lexer",
