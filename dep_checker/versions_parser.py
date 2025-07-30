@@ -242,3 +242,17 @@ def get_ada_version(repo_path: Path) -> str:
         if matches is None:
             raise RuntimeError("Error extracting version number for ada")
         return matches.groupdict()["version"]
+
+def get_node_version(repo_path: Path) -> str:
+    """
+    Parses src/node_version.h and returns the Node.js version as a string (e.g., '20.19.4').
+    """
+    version_file = repo_path / "src/node_version.h"
+    with open(version_file, "r") as f:
+        content = f.read()
+        major = re.search(r"#define NODE_MAJOR_VERSION (\d+)", content)
+        minor = re.search(r"#define NODE_MINOR_VERSION (\d+)", content)
+        patch = re.search(r"#define NODE_PATCH_VERSION (\d+)", content)
+        if not (major and minor and patch):
+            raise RuntimeError(f"Error extracting Node.js version from {version_file}")
+        return f"{major.group(1)}.{minor.group(1)}.{patch.group(1)}"
