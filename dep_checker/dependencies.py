@@ -37,6 +37,7 @@ ignore_list: list[str] = [
     "CVE-2019-0190",  # openssl, can be only triggered in combination with Apache HTTP Server version 2.4.37
 ]
 
+# Define common dependencies used in all branches
 common_dependencies: list[str] = [
     "ada",
     "acorn",
@@ -51,17 +52,23 @@ common_dependencies: list[str] = [
     "npm",
     "OpenSSL",
     "libuv",
-    "simdutf",
     "uvwasi",
     "undici",
     "zlib",
 ]
 
+# Define branch-specific dependencies
+main_specific = ["simdutf"]
+v22_specific = ["simdutf"]
+v20_specific = ["simdutf"]
+
+# Combine common dependencies with branch-specific ones
 dependencies_per_branch: dict[str, list[str]] = {
-    "main": common_dependencies,
-    "v24.x": common_dependencies,
-    "v22.x": common_dependencies,
-    "v20.x": common_dependencies,
+    "main": common_dependencies,  # No simdutf in  main
+    "v24.x": common_dependencies,  # No simdutf in v24.x
+    "v23.x": common_dependencies,  # No simdutf in v23.x
+    "v22.x": common_dependencies + v22_specific,
+    "v20.x": common_dependencies + v20_specific,
 }
 
 
