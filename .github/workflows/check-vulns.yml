@@ -31,12 +31,12 @@ jobs:
         with:
           python-version: '3.9'
       - name: Checkout current repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Installing pre-reqs
         working-directory: ./dep_checker
         run: pip install -r requirements.txt
       - name: Checkout node.js repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: nodejs/node
           path: node
@@ -64,7 +64,7 @@ jobs:
       matrix: ${{ fromJson(needs.check-vulns.outputs.matrix) }}
       max-parallel: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dblock/create-a-github-issue@v3
         with:
           update_existing: false
