@@ -48,8 +48,6 @@ def get_c_ares_version(repo_path: Path) -> str:
             raise RuntimeError("Error extracting version number for c-ares")
         return matches.groupdict()["version"]
 
-def get_cjs_lexer_version_old(repo_path: Path) -> str:
-    return get_package_json_version(repo_path / "deps/cjs-module-lexer/package.json")
 
 def get_cjs_lexer_version(repo_path: Path) -> str:
     return get_package_json_version(repo_path / "deps/cjs-module-lexer/src/package.json")
