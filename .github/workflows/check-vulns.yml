@@ -58,7 +58,7 @@ jobs:
 
   create-issues:
     needs: check-vulns
-    if: ${{ always() }}
+    if: ${{ always() && needs.check-vulns.outputs.matrix != '' }}
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.check-vulns.outputs.matrix) }}

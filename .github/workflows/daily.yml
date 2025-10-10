@@ -21,6 +21,7 @@ jobs:
   check-vulns:
     name: Check vulnerabilities on ${{ matrix.nodejsStream }}
     needs: get-supported-versions
+    if: ${{ needs.get-supported-versions.outputs.matrix != '' }}
     secrets: inherit
     strategy:
       fail-fast: false
