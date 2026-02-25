@@ -43,7 +43,6 @@ common_dependencies: list[str] = [
     "acorn",
     "brotli",
     "c-ares",
-    "CJS Module Lexer",
     "corepack",
     "HdrHistogram",
     "ICU",
@@ -58,15 +57,17 @@ common_dependencies: list[str] = [
 ]
 
 # Define branch-specific dependencies
-main_specific = ["simdutf"]
-v22_specific = ["simdutf"]
-v20_specific = ["simdutf"]
+main_specific = ["merve"]
+v25_specific = ["merve"]
+v24_specific = ["merve"]
+v22_specific = ["CJS Module Lexer", "simdutf"]
+v20_specific = ["CJS Module Lexer", "simdutf"]
 
 # Combine common dependencies with branch-specific ones
 dependencies_per_branch: dict[str, list[str]] = {
-    "main": common_dependencies,  # No simdutf in  main
-    "v24.x": common_dependencies,  # No simdutf in v24.x
-    "v23.x": common_dependencies,  # No simdutf in v23.x
+    "main": common_dependencies + main_specific,
+    "v25.x": common_dependencies + v25_specific,
+    "v24.x": common_dependencies + v24_specific,
     "v22.x": common_dependencies + v22_specific,
     "v20.x": common_dependencies + v20_specific,
 }
@@ -117,6 +118,11 @@ dependencies_info: dict[str, Dependency] = {
     "nghttp2": Dependency(
         version_parser=vp.get_nghttp2_version,
         cpe=CPE(vendor="nghttp2", product="nghttp2"),
+    ),
+    "merve": Dependency(
+        version_parser=vp.get_merve_version,
+        cpe=None,
+        keyword="merve",
     ),
     "llhttp": Dependency(
         version_parser=vp.get_llhttp_version,
