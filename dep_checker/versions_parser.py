@@ -80,6 +80,14 @@ def get_llhttp_version(repo_path: Path) -> str:
         return f"{versions['major']}.{versions['minor']}.{versions['patch']}"
 
 
+def get_merve_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/merve/merve.h", "r") as f:
+        matches = re.search('#define MERVE_VERSION "(?P<version>.*)"', f.read())
+        if matches is None:
+            raise RuntimeError("Error extracting version number for merve")
+        return matches.groupdict()["version"]
+
+
 def get_nghttp2_version(repo_path: Path) -> str:
     with open(repo_path / "deps/nghttp2/lib/includes/nghttp2/nghttp2ver.h", "r") as f:
         matches = re.search('#define NGHTTP2_VERSION "(?P<version>.*)"', f.read())
