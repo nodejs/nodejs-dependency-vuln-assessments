@@ -79,6 +79,20 @@ def get_llhttp_version(repo_path: Path) -> str:
         versions = matches.groupdict()
         return f"{versions['major']}.{versions['minor']}.{versions['patch']}"
 
+def get_LIEF_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/LIEF/include/LIEF/version.h", "r") as f:
+        matches = re.search(
+            "#define LIEF_VERSION_MAJOR (?P<major>.*)\n"
+            "#define LIEF_VERSION_MINOR (?P<minor>.*)\n"
+            "#define LIEF_VERSION_PATCH (?P<patch>.*)",
+            f.read(),
+            re.MULTILINE,
+        )
+        if matches is None:
+            raise RuntimeError("Error extracting version number for LIEF")
+        versions = matches.groupdict()
+        return f"{versions['major']}.{versions['minor']}.{versions['patch']}"
+
 
 def get_merve_version(repo_path: Path) -> str:
     with open(repo_path / "deps/merve/merve.h", "r") as f:

@@ -150,6 +150,11 @@ dependencies_info: dict[str, Dependency] = {
         cpe=CPE(vendor="llhttp", product="llhttp"),
         npm_name="llhttp",
     ),
+    "LIEF": Dependency(
+        version_parser=vp.get_LIEF_version,
+        cpe=CPE(vendor="LIEF", product="LIEF"),
+        npm_name="LIEF",
+    ),
     "ICU": Dependency(
         version_parser=vp.get_icu_version,
         cpe=CPE(vendor="icu-project", product="international_components_for_unicode"),
