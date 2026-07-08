@@ -41,6 +41,7 @@ ignore_list: list[str] = [
 common_dependencies: list[str] = [
     "acorn",
     "ada",
+    "amaro",
     "brotli",
     "c-ares",
     "corepack",
@@ -178,5 +179,8 @@ dependencies_info: dict[str, Dependency] = {
     ),
     "acorn": Dependency(
         version_parser=vp.get_acorn_version, cpe=None, npm_name="acorn"
+    ),
+    "amaro": Dependency(
+        version_parser=vp.get_amaro_version, cpe=None, npm_name="amaro"
     ),
 }

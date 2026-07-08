@@ -277,6 +277,13 @@ def get_ada_version(repo_path: Path) -> str:
             raise RuntimeError("Error extracting version number for ada")
         return matches.groupdict()["version"]
 
+def get_amaro_version(repo_path: Path) -> str:
+    with open(repo_path / "src/amaro_version.h", "r") as f:
+        matches = re.search('#define AMARO_VERSION "(?P<version>.*)"', f.read())
+        if matches is None:
+            raise RuntimeError("Error extracting version number for amaro")
+        return matches.groupdict()["version"]
+
 def get_nbytes_version(repo_path: Path) -> str:
     with open(repo_path / "deps/nbytes/include/nbytes.h", "r") as f:
         matches = re.search('#define NBYTES_VERSION "(?P<version>.*)"', f.read())
