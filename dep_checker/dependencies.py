@@ -39,37 +39,42 @@ ignore_list: list[str] = [
 
 # Define common dependencies used in all branches
 common_dependencies: list[str] = [
-    "ada",
     "acorn",
+    "ada",
     "brotli",
     "c-ares",
     "corepack",
+    "gtest",
     "HdrHistogram",
     "ICU",
+    "libuv",
     "llhttp",
     "nghttp2",
+    "nghttp3",
+    "ngtcp2",
+    "nbytes",
     "npm",
     "OpenSSL",
-    "libuv",
-    "uvwasi",
+    "simdjson",
+    "sqlite",
     "undici",
+    "uvwasi",
     "zlib",
+    "zstd",
 ]
 
 # Define branch-specific dependencies
-main_specific = ["merve"]
-v25_specific = ["merve"]
+main_specific = ["temporal_capi", "libffi", "LIEF", "merve"]
+v26_specific = ["temporal_capi", "libffi", "LIEF", "merve"]
 v24_specific = ["merve"]
 v22_specific = ["CJS Module Lexer", "simdutf"]
-v20_specific = ["CJS Module Lexer", "simdutf"]
 
 # Combine common dependencies with branch-specific ones
 dependencies_per_branch: dict[str, list[str]] = {
     "main": common_dependencies + main_specific,
-    "v25.x": common_dependencies + v25_specific,
+    "v26.x": common_dependencies + v26_specific,
     "v24.x": common_dependencies + v24_specific,
     "v22.x": common_dependencies + v22_specific,
-    "v20.x": common_dependencies + v20_specific,
 }
 
 
@@ -82,9 +87,21 @@ dependencies_info: dict[str, Dependency] = {
         version_parser=vp.get_simdutf_version,
         cpe=CPE(vendor="simdutf", product="simdutf"),
     ),
+    "simdjson": Dependency(
+        version_parser=vp.get_simdjson_version,
+        cpe=CPE(vendor="simdjson", product="simdjson"),
+    ),
+    "sqlite": Dependency(
+        version_parser=vp.get_sqlite_version,
+        cpe=CPE(vendor="sqlite", product="SQLite"),
+    ),
     "zlib": Dependency(
         version_parser=vp.get_zlib_version,
         cpe=CPE(vendor="zlib", product="zlib"),
+    ),
+    "zstd": Dependency(
+        version_parser=vp.get_zstd_version,
+        cpe=CPE(vendor="zstd", product="zstd"),
     ),
     # TODO: Add V8
     # "V8": Dependency("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*", "v8"),
@@ -108,6 +125,9 @@ dependencies_info: dict[str, Dependency] = {
         version_parser=vp.get_npm_version,
         cpe=CPE(vendor="npmjs", product="npm"),
         npm_name="npm",
+    ),
+    "nbytes": Dependency(
+        version_parser=vp.get_nbytes_version, cpe=None, keyword="nbytes"
     ),
     "nghttp3": Dependency(
         version_parser=vp.get_nghttp3_version, cpe=None, keyword="nghttp3"
