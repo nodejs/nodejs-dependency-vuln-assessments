@@ -145,6 +145,11 @@ dependencies_info: dict[str, Dependency] = {
         cpe=None,
         keyword="merve",
     ),
+    "libffi": Dependency(
+        version_parser=vp.get_libffi_version,
+        cpe=CPE(vendor="libffi", product="libffi"),
+        npm_name="libffi",
+    ),
     "llhttp": Dependency(
         version_parser=vp.get_llhttp_version,
         cpe=CPE(vendor="llhttp", product="llhttp"),

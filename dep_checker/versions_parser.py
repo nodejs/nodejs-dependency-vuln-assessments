@@ -64,6 +64,13 @@ def get_icu_version(repo_path: Path) -> str:
             raise RuntimeError("Error extracting version number for ICU")
         return matches.groupdict()["version"]
 
+def get_libffi_version(repo_path: Path) -> str:
+    with open(repo_path / "deps/libffi/configure.ac", "r") as f:
+        matches = re.search("AC_INIT\(\[libffi\],\[(?P<version>.*)\],\[", f.read())
+        if matches is None:
+            raise RuntimeError("Error extracting version number for libffi")
+        versions = matches.groupdict()
+        return matches.groupdict()["version"]
 
 def get_llhttp_version(repo_path: Path) -> str:
     with open(repo_path / "deps/llhttp/include/llhttp.h", "r") as f:
