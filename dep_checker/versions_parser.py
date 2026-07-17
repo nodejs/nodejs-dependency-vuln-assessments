@@ -43,7 +43,7 @@ def get_brotli_version(repo_path: Path) -> str:
 
 def get_c_ares_version(repo_path: Path) -> str:
     with open(repo_path / "deps/cares/include/ares_version.h", "r") as f:
-        matches = re.search('#define ARES_VERSION_STR "(?P<version>.*)"', f.read())
+        matches = re.search(r'#define ARES_VERSION_STR\s+"(?P<version>.*)"', f.read())
         if matches is None:
             raise RuntimeError("Error extracting version number for c-ares")
         return matches.groupdict()["version"]
