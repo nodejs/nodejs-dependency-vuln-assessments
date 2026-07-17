@@ -102,7 +102,7 @@ dependencies_info: dict[str, Dependency] = {
     ),
     "zstd": Dependency(
         version_parser=vp.get_zstd_version,
-        cpe=CPE(vendor="zstd", product="zstd"),
+        cpe=CPE(vendor="facebook", product="zstandard"),
     ),
     # TODO: Add V8
     # "V8": Dependency("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*", "v8"),
