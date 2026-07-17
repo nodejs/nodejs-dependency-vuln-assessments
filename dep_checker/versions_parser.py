@@ -286,7 +286,7 @@ def get_simdjson_version(repo_path: Path) -> str:
 
 def get_sqlite_version(repo_path: Path) -> str:
     with open(repo_path / "deps/sqlite/sqlite3.h", "r") as f:
-        matches = re.search('#define SQLITE_VERSION "(?P<version>.*)"', f.read())
+        matches = re.search(r'#define SQLITE_VERSION\s+"(?P<version>.*)"', f.read())
         if matches is None:
             raise RuntimeError("Error extracting version number for sqlite")
         return matches.groupdict()["version"]
