@@ -259,16 +259,16 @@ def get_zlib_version(repo_path: Path) -> str:
 def get_zstd_version(repo_path: Path) -> str:
     with open(repo_path / "deps/zstd/lib/zstd.h", "r") as f:
         matches = re.search(
-            "#define ZSTD_VERSION_MAJOR (?P<major>.*)\n"
-            "#define ZSTD_VERSION_MINOR (?P<minor>.*)\n"
-            "#define ZSTD_VERSION_PATCH (?P<patch>.*)",
+            r"#define ZSTD_VERSION_MAJOR\s+(?P<major>.*)\n"
+            r"#define ZSTD_VERSION_MINOR\s+(?P<minor>.*)\n"
+            r"#define ZSTD_VERSION_RELEASE\s+(?P<release>.*)",
             f.read(),
             re.MULTILINE,
         )
         if matches is None:
             raise RuntimeError("Error extracting version number for zstd")
         versions = matches.groupdict()
-        return f"{versions['major']}.{versions['minor']}.{versions['patch']}"
+        return f"{versions['major']}.{versions['minor']}.{versions['release']}"
 
 def get_simdutf_version(repo_path: Path) -> str:
     with open(repo_path / "deps/simdutf/simdutf.h", "r") as f:
