@@ -1,0 +1,56 @@
+name: VEX Entry Automation
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  create-vex-entry:
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.issue.labels.*.name, 'vulnerable_code_not_in_execute_path') ||
+      contains(github.event.issue.labels.*.name, 'vulnerable_code_not_present') ||
+      contains(github.event.issue.labels.*.name, 'vulnerable_code_cannot_be_controlled_by_adversary') ||
+      contains(github.event.issue.labels.*.name, 'inline_mitigations_already_exist')
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v5
+
+      - name: Checkout security-wg repo
+        uses: actions/checkout@v5
+        with:
+          repository: nodejs/security-wg
+          token: ${{ secrets.SECURITY_WG_TOKEN }}
+          path: security-wg
+
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+
+      - name: Generate VEX entry
+        working-directory: ./scripts
+        run: |
+          python generate_vex_entry.py \
+            --issue-number "${{ github.event.issue.number }}" \
+            --issue-title "${{ github.event.issue.title }}" \
+            --issue-url "${{ github.event.issue.html_url }}" \
+            --labels "${{ join(github.event.issue.labels.*.name, ',') }}" \
+            --output-dir "../security-wg/vuln/deps"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.SECURITY_WG_TOKEN }}
+          path: security-wg
+          branch: vex-issue-${{ github.event.issue.number }}
+          commit-message: "vuln: add VEX entry for issue #${{ github.event.issue.number }}"
+          title: "vuln: add VEX entry for nodejs/nodejs-dependency-vuln-assessments#${{ github.event.issue.number }}"
+          body: |
+            Automated VEX entry from issue closure.
+
+            **Source:** ${{ github.event.issue.html_url }}
+            **Closed by:** @${{ github.event.sender.login }}
