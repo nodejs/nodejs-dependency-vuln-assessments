@@ -35,6 +35,7 @@ class Dependency:
 
 ignore_list: list[str] = [
     "CVE-2018-25032",  # zlib, already fixed in the fork Node uses (Chromium's)
+    "CVE-2026-27171",  # zlib, negative lengths in crc32_combine*, not called by Node
     "CVE-2007-5536",  # openssl, old and only in combination with HP-UX
     "CVE-2019-0190",  # openssl, can be only triggered in combination with Apache HTTP Server version 2.4.37
     "CVE-2022-31631",  # sqlite, PHP PDO::quote() bug, not SQLite
