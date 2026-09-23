@@ -26,6 +26,7 @@ from typing import Optional
 from pathlib import Path
 
 import json
+import re
 
 
 class Vulnerability:
@@ -162,12 +163,21 @@ def query_nvd(
         ]
         if query_results:
             version = dep.version_parser(repo_path)
+            is_release_version = re.fullmatch(
+                r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", version
+            ) is not None
             found_vulnerabilities.extend(
                 [
                     Vulnerability(
                         id=cve.id, url=cve.url, dependency=name, version=version
                     )
                     for cve in query_results
+                    # Keyword queries do not constrain the dependency version.
+                    # Only exclude plain release versions with a reviewed range.
+                    # Keep alerts for development or unrecognized versions.
+                    if cve.id not in dep.nvd_vulnerable_versions
+                    or not is_release_version
+                    or version in SpecifierSet(dep.nvd_vulnerable_versions[cve.id])
                 ]
             )
 

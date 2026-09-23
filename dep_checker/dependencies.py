@@ -18,11 +18,13 @@ class Dependency:
         cpe: Optional[CPE] = None,
         npm_name: Optional[str] = None,
         keyword: Optional[str] = None,
+        nvd_vulnerable_versions: Optional[dict[str, str]] = None,
     ):
         self.version_parser = version_parser
         self.cpe = cpe
         self.npm_name = npm_name
         self.keyword = keyword
+        self.nvd_vulnerable_versions = nvd_vulnerable_versions or {}
 
     def get_cpe(self, repo_path: Path) -> Optional[str]:
         if self.cpe:
@@ -144,7 +146,15 @@ dependencies_info: dict[str, Dependency] = {
         version_parser=vp.get_nghttp3_version, cpe=None, keyword="nghttp3"
     ),
     "ngtcp2": Dependency(
-        version_parser=vp.get_ngtcp2_version, cpe=None, keyword="ngtcp2"
+        version_parser=vp.get_ngtcp2_version,
+        cpe=None,
+        keyword="ngtcp2",
+        nvd_vulnerable_versions={
+            # https://github.com/ngtcp2/ngtcp2/security/advisories/GHSA-4gmv-gf46-r4g5
+            "CVE-2024-52811": "==1.9.0",
+            # https://github.com/ngtcp2/ngtcp2/security/advisories/GHSA-f523-465f-8c8f
+            "CVE-2026-40170": "<1.22.1",
+        },
     ),
     "nghttp2": Dependency(
         version_parser=vp.get_nghttp2_version,

@@ -63,6 +63,11 @@ non-affected version.
 - The queries can return false positives (
   see [this](https://github.com/nodejs/security-wg/issues/802#issuecomment-1144207417) comment for an example). These
   can be ignored by adding the vulnerability to the `ignore_list` in `dependencies.py`
+- Keyword queries do not constrain the dependency version. A dependency can define `nvd_vulnerable_versions`
+  with reviewed CVE-to-version ranges (using `packaging` specifier syntax) to filter out unaffected versions.
+  Each range should cite its upstream advisory. CVEs without a configured range are still reported.
+  Ranges only filter plain `major.minor.patch` versions without leading zeros. Prerelease, development,
+  vendor-suffixed, and unrecognized versions retain their alerts.
 - If no NVD API key is provided, the script will take a while to finish (~2 min) because queries to the NVD
   are [rate-limited](https://nvd.nist.gov/developers/start-here)
 - If any vulnerabilities are found, the script returns 1 and prints out a list with the ID and a link to a description
@@ -70,4 +75,10 @@ non-affected version.
   the vulnerability. This is the case except when the ID matches one in the ignore-list (inside `dependencies.py`) in
   which case the vulnerability is ignored.
 
+## Offline tests
 
+From the repository root, run:
+
+```shell
+python3 -m unittest discover -s dep_checker -p 'test_*.py' -v
+```
