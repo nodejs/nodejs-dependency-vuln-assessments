@@ -129,7 +129,9 @@ dependencies_info: dict[str, Dependency] = {
     ),
     # nbytes has no CPE, and "nbytes" is a common variable name in C code, so
     # an NVD keyword search only matches unrelated CVEs (Linux kernel, binutils,
-    # etc.). nbytes is maintained by the Node.js project and is not on npm.
+    # etc.). nbytes is not on npm either. Security bugs in it are reported
+    # through the Node.js HackerOne program and generally don't get CVEs, see
+    # https://github.com/nodejs/.github/blob/main/SECURITY.md
     "nbytes": Dependency(version_parser=vp.get_nbytes_version, cpe=None),
     "nghttp3": Dependency(
         version_parser=vp.get_nghttp3_version, cpe=None, keyword="nghttp3"
