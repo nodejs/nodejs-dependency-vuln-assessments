@@ -1,0 +1,23 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+      - name: Run unit tests
+        working-directory: ./dep_checker
+        run: python -m unittest discover -p 'test_*.py' -v
