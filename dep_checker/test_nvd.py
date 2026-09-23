@@ -40,6 +40,32 @@ class NvdVersionRangeTests(unittest.TestCase):
                 )
                 self.assertTrue(all(v.version == version for v in results))
 
+    def test_non_release_versions_keep_all_advisories(self):
+        versions = [
+            "1.9.0-DEV",
+            "1.11.0-DEV",
+            "1.22.1-DEV",
+            "1.25.0-rc.1",
+            "1.11.0-custom",
+            "1.25.0+vendor.1",
+            "v1.25.0",
+            "1.25",
+            "1.25.0.1",
+            "01.25.0",
+            "1.25.0\n",
+            "unknown",
+            "",
+        ]
+        ranges = dependencies_info["ngtcp2"].nvd_vulnerable_versions
+        for version in versions:
+            with self.subTest(version=version):
+                results = self.query(version, ranges)
+                self.assertEqual(
+                    {v.id for v in results},
+                    {"CVE-2024-52811", "CVE-2026-40170", "CVE-2099-99999"},
+                )
+                self.assertTrue(all(v.version == version for v in results))
+
     def test_dependency_without_ranges_keeps_all_advisories(self):
         self.assertEqual(
             {v.id for v in self.query("1.25.0", None)},
