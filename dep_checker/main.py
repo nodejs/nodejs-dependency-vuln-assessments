@@ -168,6 +168,10 @@ def query_nvd(
                         id=cve.id, url=cve.url, dependency=name, version=version
                     )
                     for cve in query_results
+                    # Keyword queries do not constrain the dependency version.
+                    # Keep reporting CVEs without an explicitly reviewed range.
+                    if cve.id not in dep.nvd_vulnerable_versions
+                    or version in SpecifierSet(dep.nvd_vulnerable_versions[cve.id])
                 ]
             )
 
