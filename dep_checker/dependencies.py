@@ -44,6 +44,10 @@ ignore_list: list[str] = [
     "CVE-2026-58055",  # nghttp2, nghttpx proxy, Node only ships libnghttp2
     "CVE-2026-78227",  # ngtcp2, Unbound DNS-over-QUIC bug, not ngtcp2
     "GHSA-3966-f6p6-2qr9",  # npm, withdrawn duplicate advisory, npm cli not affected
+    "CVE-2026-14683",  # HdrHistogram Java implementation, Node uses HdrHistogram_c
+    "CVE-2026-14684",  # HdrHistogram Java implementation, Node uses HdrHistogram_c
+    "CVE-2026-14685",  # HdrHistogram Java implementation, Node uses HdrHistogram_c
+    "CVE-2026-14686",  # HdrHistogram Java implementation, Node uses HdrHistogram_c
 ]
 
 # Define common dependencies used in all branches
