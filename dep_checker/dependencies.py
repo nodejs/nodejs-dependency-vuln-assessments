@@ -35,6 +35,13 @@ ignore_list: list[str] = [
     "CVE-2018-25032",  # zlib, already fixed in the fork Node uses (Chromium's)
     "CVE-2007-5536",  # openssl, old and only in combination with HP-UX
     "CVE-2019-0190",  # openssl, can be only triggered in combination with Apache HTTP Server version 2.4.37
+    "CVE-2022-31631",  # sqlite, PHP PDO::quote() bug, not SQLite
+    "CVE-2025-13034",  # ngtcp2, curl --pinnedpubkey bug, not ngtcp2
+    "CVE-2025-71316",  # sqlite, sqldiff.exe on Windows, which Node does not ship
+    "CVE-2026-22184",  # zlib, contrib/untgz utility, which Node does not ship
+    "CVE-2026-58055",  # nghttp2, nghttpx proxy, Node only ships libnghttp2
+    "CVE-2026-78227",  # ngtcp2, Unbound DNS-over-QUIC bug, not ngtcp2
+    "GHSA-3966-f6p6-2qr9",  # npm, withdrawn duplicate advisory, npm cli not affected
 ]
 
 # Define common dependencies used in all branches
