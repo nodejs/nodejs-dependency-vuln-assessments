@@ -11,6 +11,10 @@ This repo is used to
 Automated checks are currently run through a GitHub action using
 [dep_checker](https://github.com/nodejs/nodejs-dependency-vuln-assessments/tree/main/dep_checker).
 
+When issues are closed with specific labels (e.g., `vulnerable_code_not_in_execute_path`),
+a VEX entry is automatically generated via
+[vex-automation](https://github.com/nodejs/nodejs-dependency-vuln-assessments/tree/main/.github/workflows/vex-automation.yml).
+
 **DO NOT REPORT OR DISCUSS VULNERABILITIES THAT ARE NOT ALREADY
 PUBLIC IN THIS REPO**. Please report new vulnerabilities either to
 the projects for a specific dependency or report to the Node.js project
