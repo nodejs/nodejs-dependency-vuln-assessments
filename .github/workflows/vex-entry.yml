@@ -1,0 +1,102 @@
+name: Create VEX entry in nodejs/security-wg
+
+# When an issue is closed with one of the OpenVEX justification labels, open a
+# pull request against nodejs/security-wg adding a `vuln/deps/<N>.json` entry.
+# See README.md, section "VEX labels", for the label meanings.
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  vex-entry:
+    if: |
+      contains(github.event.issue.labels.*.name, 'component_not_present') ||
+      contains(github.event.issue.labels.*.name, 'vulnerable_code_not_present') ||
+      contains(github.event.issue.labels.*.name, 'vulnerable_code_not_in_execute_path') ||
+      contains(github.event.issue.labels.*.name, 'vulnerable_code_cannot_be_controlled_by_adversary') ||
+      contains(github.event.issue.labels.*.name, 'inline_mitigations_already_exist')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v7
+
+      - name: Checkout nodejs/security-wg
+        uses: actions/checkout@v7
+        with:
+          repository: nodejs/security-wg
+          path: security-wg
+          token: ${{ secrets.SECURITY_WG_TOKEN }}
+
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.9'
+
+      - name: Fetch issue comments
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api --paginate "repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments" > comments.json
+
+      - name: Generate VEX entry
+        id: entry
+        working-directory: ./dep_checker
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_LABELS: ${{ join(github.event.issue.labels.*.name, ',') }}
+          CLOSED_BY: ${{ github.event.sender.login }}
+        run: |
+          python vex_entry.py \
+            --issue-title "$ISSUE_TITLE" \
+            --issue-url "$ISSUE_URL" \
+            --labels "$ISSUE_LABELS" \
+            --closed-by "$CLOSED_BY" \
+            --comments-file ../comments.json \
+            --deps-dir ../security-wg/vuln/deps
+
+      - name: Create pull request in nodejs/security-wg
+        id: pr
+        if: steps.entry.outputs.skipped == 'false'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.SECURITY_WG_TOKEN }}
+          path: security-wg
+          branch: ${{ steps.entry.outputs.branch }}
+          delete-branch: true
+          commit-message: 'vuln: add deps entry for ${{ steps.entry.outputs.cves }}'
+          title: 'vuln: add deps entry for ${{ steps.entry.outputs.cves }}'
+          body: |
+            Adds `vuln/deps/${{ steps.entry.outputs.entry_file }}` marking ${{ steps.entry.outputs.cves }} as `not_affected`.
+
+            Source: ${{ github.event.issue.html_url }}
+            Closed by: @${{ github.event.sender.login }}
+
+            Please review the `overview` text before merging. cc: @nodejs/security-wg
+          labels: security-wg-agenda
+
+      - name: Comment on the issue
+        if: always() && steps.entry.outcome != 'skipped'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE: ${{ github.event.issue.number }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ENTRY_OUTCOME: ${{ steps.entry.outcome }}
+          SKIPPED: ${{ steps.entry.outputs.skipped }}
+          PR_URL: ${{ steps.pr.outputs.pull-request-url }}
+        run: |
+          if [ "$ENTRY_OUTCOME" != "success" ]; then
+            body="The VEX entry could not be generated, see $RUN_URL. Check that the title contains a CVE id and that exactly one VEX justification label is set."
+          elif [ "$SKIPPED" = "true" ]; then
+            body="All CVEs in this issue are already recorded in nodejs/security-wg \`vuln/deps\`, no VEX entry created."
+          elif [ -n "$PR_URL" ]; then
+            body="VEX entry opened in nodejs/security-wg: $PR_URL"
+          else
+            body="VEX entry already pending in nodejs/security-wg, see $RUN_URL."
+          fi
+          gh issue comment "$ISSUE" --repo "${{ github.repository }}" --body "$body"
